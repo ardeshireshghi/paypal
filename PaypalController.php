@@ -42,7 +42,8 @@ class PaypalController extends BaseController {
     const PAYPAL_API_CLIENT_SECRET  = "";
     const PAYPAL_IPN_URL = "https://www.paypal.com/cgi-bin/webscr";
 
-    protected $paypalErrors;
+    protected static $paypalErrors = array("INTERNAL_SERVICE_ERROR", "VALIDATION_ERROR", "EXPIRED_CREDIT_CARD", "EXPIRED_CREDIT_CARD_TOKEN", "INVALID_ACCOUNT_NUMBER", "INVALID_RESOURCE_ID", "DUPLICATE_REQUEST_ID", "TRANSACTION_LIMIT_EXCEEDED", "TRANSACTION_REFUSED", "REFUND_TIME_LIMIT_EXCEEDED", "FULL_REFUND_NOT_ALLOWED_AFTER_PARTIAL_REFUND", "TRANSACTION_ALREADY_REFUNDED", "PERMISSION_DENIED", "CREDIT_CARD_REFUSED", "CREDIT_CARD_CVV_CHECK_FAILED", "PAYEE_ACCOUNT_RESTRICTED", "PAYMENT_NOT_APPROVED_FOR_EXECUTION", "INVALID_PAYER_ID", "PAYEE_ACCOUNT_LOCKED_OR_CLOSED", "PAYMENT_APPROVAL_EXPIRED", "PAYMENT_EXPIRED", "DATA_RETRIEVAL", "PAYEE_ACCOUNT_NO_CONFIRMED_EMAIL", "PAYMENT_STATE_INVALID", "AMOUNT_MISMATCH", "CURRENCY_NOT_ALLOWED", "CURRENCY_MISMATCH", "AUTHORIZATION_EXPIRED", "INVALID_ARGUMENT", "PAYER_ID_MISSING_FOR_CARD_TOKEN", "CARD_TOKEN_PAYER_MISMATCH", "AUTHORIZATION_CANNOT_BE_VOIDED", "RATE_LIMIT_REACHED", "UNAUTHORIZED_PAYMENT", "DCC_UNSUPPORTED_CURRENCY_CC_TYPE", "DCC_CC_TYPE_NOT_SUPPORTED", "DCC_REAUTHORIZATION_NOT_ALLOWED", "CANNOT_REAUTH_INSIDE_HONOR_PERIOD");
+
     protected $apiContext;
     protected $payer;
     protected $amount;
@@ -57,20 +58,28 @@ class PaypalController extends BaseController {
     /**
      * Constructor
      */
-    public function __construct()
-    {
+    public function __construct(
+        Payer $payer = null,
+        Amount $amount = null,
+        Item $item = null,
+        ItemList $itemList = null,
+        RedirectUrls $redirectUrls = null,
+        Payment $payment = null,
+        PaymentExecution $paymentExecution = null,
+        Transaction $transaction = null,
+        Payee $payee = null,
+        ApiContext $apiContext = null)  {
 
-        $this->paypalErrors = array("INTERNAL_SERVICE_ERROR", "VALIDATION_ERROR", "EXPIRED_CREDIT_CARD", "EXPIRED_CREDIT_CARD_TOKEN", "INVALID_ACCOUNT_NUMBER", "INVALID_RESOURCE_ID", "DUPLICATE_REQUEST_ID", "TRANSACTION_LIMIT_EXCEEDED", "TRANSACTION_REFUSED", "REFUND_TIME_LIMIT_EXCEEDED", "FULL_REFUND_NOT_ALLOWED_AFTER_PARTIAL_REFUND", "TRANSACTION_ALREADY_REFUNDED", "PERMISSION_DENIED", "CREDIT_CARD_REFUSED", "CREDIT_CARD_CVV_CHECK_FAILED", "PAYEE_ACCOUNT_RESTRICTED", "PAYMENT_NOT_APPROVED_FOR_EXECUTION", "INVALID_PAYER_ID", "PAYEE_ACCOUNT_LOCKED_OR_CLOSED", "PAYMENT_APPROVAL_EXPIRED", "PAYMENT_EXPIRED", "DATA_RETRIEVAL", "PAYEE_ACCOUNT_NO_CONFIRMED_EMAIL", "PAYMENT_STATE_INVALID", "AMOUNT_MISMATCH", "CURRENCY_NOT_ALLOWED", "CURRENCY_MISMATCH", "AUTHORIZATION_EXPIRED", "INVALID_ARGUMENT", "PAYER_ID_MISSING_FOR_CARD_TOKEN", "CARD_TOKEN_PAYER_MISMATCH", "AUTHORIZATION_CANNOT_BE_VOIDED", "RATE_LIMIT_REACHED", "UNAUTHORIZED_PAYMENT", "DCC_UNSUPPORTED_CURRENCY_CC_TYPE", "DCC_CC_TYPE_NOT_SUPPORTED", "DCC_REAUTHORIZATION_NOT_ALLOWED", "CANNOT_REAUTH_INSIDE_HONOR_PERIOD");
-        $this->apiContext   = new ApiContext(new OAuthTokenCredential(self::PAYPAL_API_CLIENT_ID, self::PAYPAL_API_CLIENT_SECRET));
-        $this->payer        = new Payer();
-        $this->amount       = new Amount();
-        $this->item         = new Item();
-        $this->itemList     = new ItemList();
-        $this->redirectUrls = new RedirectUrls();
-        $this->payment      = new Payment();
-        $this->execution    = new PaymentExecution();
-        $this->transaction  = new Transaction();
-        $this->payee        = new Payee();
+            $this->apiContext   = ($apiContext instanceof ApiContext) ? $apiContext : new ApiContext(new OAuthTokenCredential(self::PAYPAL_API_CLIENT_ID, self::PAYPAL_API_CLIENT_SECRET));
+            $this->payer        = ($payer instanceof Payer) ? $payer : new Payer();
+            $this->amount       = ($amount instanceof Amount) ? $amount : new Amount();
+            $this->item         = ($item instanceof Item) ? $item : new Item();
+            $this->itemList     = ($itemList instanceof ItemList) ? $itemList : new ItemList();
+            $this->redirectUrls = ($redirectUrls instanceof RedirectUrls) ? $redirectUrls : new RedirectUrls();
+            $this->payment      = ($payment instanceof Payment) ? $payment : new Payment();
+            $this->execution    = ($execution instanceof PaymentExecution) ? $execution : new PaymentExecution();
+            $this->transaction  = ($transaction instanceof Transaction) ? $transaction  : new Transaction();
+            $this->payee        = ($payee instanceof Payee) ? $payee : new Payee();
     }
 
     /**
@@ -231,7 +240,7 @@ class PaypalController extends BaseController {
      */
     protected function hasPaypalError($response)
     {
-        return (in_array($response->name, $this->paypalErrors));
+        return (in_array($response->name, static::$paypalErrors));
     }
 
     /**
